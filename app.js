@@ -146,23 +146,18 @@ abi = [
 
 window.addEventListener('load', async () => {
     if (typeof web3 !== 'undefined') {
-        web3 = new Web3(web3.currentProvider);
+		web3 = new Web3(web3.currentProvider);
+		// await window.ethereum.enable();
         console.log('MetaMask Success');
-        await window.ethereum.enable();
-		web3.eth.defaultAccount = web3.eth.accounts.givenProvider.selectedAddress;
-		contractInstance = new web3.eth.Contract(abi, '0xd01e06f2e70bea9ae7640367bdf0b24ac5f35ed1'); // Ganache contract address '0x15013d783fadAaA9e9d2F0e8d71C575f81a39834'
-
     } else {
         console.log('No web3? You should consider trying MetaMask!');
         web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545'));
     }
 });
 
+web3.eth.defaultAccount = web3.eth.accounts.givenProvider.selectedAddress;
+contractInstance = new web3.eth.Contract(abi, '0x15013d783fadAaA9e9d2F0e8d71C575f81a39834'); // Ganache contract address ''0x15013d783fadAaA9e9d2F0e8d71C575f81a39834''
 
-// console.log(abi)
-
-// let contractInstance = new web3.eth.Contract(abi, '0x6c6101607c84368dd130909bae7c7273d8914708'); // ropsten address = '0xd01e06f2e70bea9ae7640367bdf0b24ac5f35ed1', on Ganache = '0x15013d783fadAaA9e9d2F0e8d71C575f81a39834'
-// item = '0xeb0876078ee9593869a1474f0e912c2816ee9920cb445e1e33bcfc8d10815d0b';
 
 // Step 1: Load file
 selectFileBtnCtm.addEventListener("click", () => {
@@ -204,29 +199,30 @@ storeBtn.addEventListener('click', async () => {
 	verifyBtn.hidden = true;
     document.getElementById('or').hidden = true;
 	console.log(hashBtnTxt.innerText);
-	await contractInstance.methods.notarize(hashBtnTxt.innerText)
-		.send({from:web3.eth.defaultAccount})
-		.on('receipt', receipt => {
-			console.log(receipt); 
-			if (receipt.events.notarizationSuccess.returnValues.success == true) {
-				console.log('Notarization Successful')
-			} else { 
-				console.log('something went wrong')
-			}
-		});
+	contractInstance.methods.notarize(item1).send({from: web3.eth.defaultAccount})
+        .once('receipt', receipt => {
+            if (receipt.events.notarizationSuccess.returnValues.success) {
+                console.log('Notarization successful') // include function that changes time to good UX
+            } else {
+                console.log('Something went wrong')
+            }
+        })
 });
 
 // Option 2: Verify Possession
 
 
 verifyBtn.addEventListener('click', async () => {
-	await contractInstance.methods.verifyPossession(hashBtnTxt.innerText)
-		.send({from:web3.eth.defaultAccount})
-		.on('receipt', receipt => {
-			if (receipt.events.verificationSuccess.returnValues.success == true) {
-				console.log('verification successful')
-			} else {'something fucked up'}
-		});
+	contractInstance.methods.verifyPossession(hash)
+		.send({from: web3.eth.defaultAccount})
+        .once('receipt', receipt => {
+            if (receipt.events.verificationSuccess.returnValues.success) {
+                console.log('Verification was successful. This owner of this address submitted this hash at this time', receipt.events.verificationSuccess.returnValues.timestamp)
+            } else {
+                console.log('Something went wrong')
+            }
+            //data = receipt; console.log(data)});
+        })
 });
 
 // helper function for Step 3
